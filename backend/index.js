@@ -2,6 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 require("dotenv").config();
+const { ClerkExpressRequireAuth } = require("@clerk/clerk-sdk-node");
 
 const app = express();
 
@@ -18,6 +19,11 @@ mongoose
 // Basic Routes
 app.get("/", (req, res) => {
   res.send("API is running");
+});
+
+// Add this middleware to protect routes
+app.use("/protected-routes", ClerkExpressRequireAuth(), (req, res) => {
+  // Your protected routes here
 });
 
 // Start the server
