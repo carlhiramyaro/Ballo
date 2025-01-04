@@ -35,43 +35,30 @@ const tokenCache = {
 };
 
 const InitialLayout = () => {
-  console.log("Work starts");
   const { isLoaded, isSignedIn } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
   useEffect(() => {
     if (!isLoaded) return;
-    console.log("usee effect");
 
     const inTabsGroup = segments[0] === "(auth)";
 
-    console.log("Auth state:", {
-      isLoaded,
-      isSignedIn,
-      inTabsGroup,
-      segments: segments.join("/"),
-    });
-
-    if (isSignedIn && !inTabsGroup) {
+    // Only navigate if we're not already in the correct group
+    if (isSignedIn && !inTabsGroup && segments[0] !== "(auth)") {
       router.replace("/(auth)/home");
-    } else if (!isSignedIn) {
+    } else if (!isSignedIn && segments[0] !== "(public)") {
       router.replace("/(public)/login");
     }
   }, [isLoaded, isSignedIn, segments]);
 
-  // Show a loading state while Clerk is initializing
+  // Don't render anything until Clerk is loaded
   if (!isLoaded) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
         <ActivityIndicator size="large" color="#0000ff" />
       </View>
     );
-  }
-
-  // Don't render anything until we do the first navigation
-  if (!segments.includes("(auth)") && !segments.includes("(public)")) {
-    return null;
   }
 
   return <Slot />;
