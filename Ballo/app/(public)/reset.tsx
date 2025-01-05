@@ -1,4 +1,11 @@
-import { View, StyleSheet, TextInput, Button } from "react-native";
+import {
+  View,
+  StyleSheet,
+  TextInput,
+  Button,
+  Pressable,
+  Text,
+} from "react-native";
 import React, { useState } from "react";
 import { Stack } from "expo-router";
 import { useSignIn } from "@clerk/clerk-expo";
@@ -49,48 +56,60 @@ const PwReset = () => {
     <View style={styles.container}>
       <Stack.Screen options={{ headerBackVisible: !successfulCreation }} />
 
-      {!successfulCreation && (
-        <>
-          <TextInput
-            autoCapitalize="none"
-            placeholder="simon@galaxies.dev"
-            value={emailAddress}
-            onChangeText={setEmailAddress}
-            style={styles.inputField}
-          />
+      <View style={styles.formContainer}>
+        {!successfulCreation ? (
+          <>
+            <Text style={styles.title}>Reset Password</Text>
+            <Text style={styles.subtitle}>
+              Enter your email to receive a reset code
+            </Text>
 
-          <Button
-            onPress={onRequestReset}
-            title="Send Reset Email"
-            color={"#6c47ff"}
-          ></Button>
-        </>
-      )}
+            <View style={styles.inputContainer}>
+              <TextInput
+                autoCapitalize="none"
+                placeholder="Email"
+                placeholderTextColor="#666"
+                value={emailAddress}
+                onChangeText={setEmailAddress}
+                style={styles.inputField}
+              />
+            </View>
 
-      {successfulCreation && (
-        <>
-          <View>
-            <TextInput
-              value={code}
-              placeholder="Code..."
-              style={styles.inputField}
-              onChangeText={setCode}
-            />
-            <TextInput
-              placeholder="New password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              style={styles.inputField}
-            />
-          </View>
-          <Button
-            onPress={onReset}
-            title="Set new Password"
-            color={"#6c47ff"}
-          ></Button>
-        </>
-      )}
+            <Pressable style={styles.button} onPress={onRequestReset}>
+              <Text style={styles.buttonText}>Send Reset Email</Text>
+            </Pressable>
+          </>
+        ) : (
+          <>
+            <Text style={styles.title}>New Password</Text>
+            <Text style={styles.subtitle}>
+              Enter the code and your new password
+            </Text>
+
+            <View style={styles.inputContainer}>
+              <TextInput
+                value={code}
+                placeholder="Verification Code"
+                placeholderTextColor="#666"
+                style={styles.inputField}
+                onChangeText={setCode}
+              />
+              <TextInput
+                placeholder="New Password"
+                placeholderTextColor="#666"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                style={styles.inputField}
+              />
+            </View>
+
+            <Pressable style={styles.button} onPress={onReset}>
+              <Text style={styles.buttonText}>Set New Password</Text>
+            </Pressable>
+          </>
+        )}
+      </View>
     </View>
   );
 };
@@ -113,6 +132,31 @@ const styles = StyleSheet.create({
   button: {
     margin: 8,
     alignItems: "center",
+  },
+  formContainer: {
+    flex: 1,
+    justifyContent: "center",
+    padding: 20,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: "bold",
+    color: "white",
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: "#666",
+    marginBottom: 32,
+  },
+  inputContainer: {
+    gap: 16,
+    marginBottom: 24,
+  },
+  buttonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });
 

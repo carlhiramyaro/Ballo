@@ -1,4 +1,11 @@
-import { Button, TextInput, View, StyleSheet } from "react-native";
+import {
+  Button,
+  TextInput,
+  View,
+  StyleSheet,
+  Pressable,
+  Text,
+} from "react-native";
 import { useSignUp } from "@clerk/clerk-expo";
 import Spinner from "react-native-loading-spinner-overlay";
 import { useState } from "react";
@@ -67,51 +74,58 @@ const Register = () => {
       <Stack.Screen options={{ headerBackVisible: !pendingVerification }} />
       <Spinner visible={loading} />
 
-      {!pendingVerification && (
-        <>
-          <TextInput
-            autoCapitalize="none"
-            placeholder="simon@galaxies.dev"
-            placeholderTextColor="#999"
-            value={emailAddress}
-            onChangeText={setEmailAddress}
-            style={styles.inputField}
-          />
-          <TextInput
-            placeholder="password"
-            placeholderTextColor="#999"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            style={styles.inputField}
-          />
+      <View style={styles.formContainer}>
+        {!pendingVerification ? (
+          <>
+            <Text style={styles.title}>Create Account</Text>
+            <Text style={styles.subtitle}>Sign up to get started</Text>
 
-          <Button
-            onPress={onSignUpPress}
-            title="Sign up"
-            color={"#6c47ff"}
-          ></Button>
-        </>
-      )}
+            <View style={styles.inputContainer}>
+              <TextInput
+                autoCapitalize="none"
+                placeholder="Email"
+                placeholderTextColor="#666"
+                value={emailAddress}
+                onChangeText={setEmailAddress}
+                style={styles.inputField}
+              />
+              <TextInput
+                placeholder="Password"
+                placeholderTextColor="#666"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                style={styles.inputField}
+              />
+            </View>
 
-      {pendingVerification && (
-        <>
-          <View>
-            <TextInput
-              value={code}
-              placeholder="Code..."
-              placeholderTextColor="#999"
-              style={styles.inputField}
-              onChangeText={setCode}
-            />
-          </View>
-          <Button
-            onPress={onPressVerify}
-            title="Verify Email"
-            color={"#6c47ff"}
-          ></Button>
-        </>
-      )}
+            <Pressable style={styles.button} onPress={onSignUpPress}>
+              <Text style={styles.buttonText}>Create Account</Text>
+            </Pressable>
+          </>
+        ) : (
+          <>
+            <Text style={styles.title}>Verify Email</Text>
+            <Text style={styles.subtitle}>
+              Enter the code sent to your email
+            </Text>
+
+            <View style={styles.inputContainer}>
+              <TextInput
+                value={code}
+                placeholder="Verification Code"
+                placeholderTextColor="#666"
+                style={styles.inputField}
+                onChangeText={setCode}
+              />
+            </View>
+
+            <Pressable style={styles.button} onPress={onPressVerify}>
+              <Text style={styles.buttonText}>Verify Email</Text>
+            </Pressable>
+          </>
+        )}
+      </View>
     </View>
   );
 };
@@ -122,18 +136,47 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 20,
   },
+  formContainer: {
+    flex: 1,
+    justifyContent: "center",
+    padding: 20,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: "bold",
+    color: "white",
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: "#666",
+    marginBottom: 32,
+  },
+  inputContainer: {
+    gap: 16,
+    marginBottom: 24,
+  },
   inputField: {
-    marginVertical: 4,
     height: 50,
     borderWidth: 1,
-    borderColor: "#6c47ff",
-    borderRadius: 4,
-    padding: 10,
-    backgroundColor: "#fff",
+    borderColor: "#333",
+    borderRadius: 8,
+    padding: 12,
+    backgroundColor: "#111",
+    color: "white",
   },
   button: {
-    margin: 8,
+    backgroundColor: "#6c47ff",
+    height: 50,
+    borderRadius: 8,
+    justifyContent: "center",
     alignItems: "center",
+    marginBottom: 24,
+  },
+  buttonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });
 

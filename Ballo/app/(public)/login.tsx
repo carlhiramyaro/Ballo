@@ -43,33 +43,46 @@ const Login = () => {
     <View style={styles.container}>
       <Spinner visible={loading} />
 
-      <TextInput
-        autoCapitalize="none"
-        placeholder="simon@galaxies.dev"
-        value={emailAddress}
-        onChangeText={setEmailAddress}
-        style={styles.inputField}
-      />
-      <TextInput
-        placeholder="password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        style={styles.inputField}
-      />
+      <View style={styles.formContainer}>
+        <Text style={styles.title}>Welcome Back</Text>
+        <Text style={styles.subtitle}>Sign in to continue</Text>
 
-      <Button onPress={onSignInPress} title="Login" color={"#6c47ff"}></Button>
+        <View style={styles.inputContainer}>
+          <TextInput
+            autoCapitalize="none"
+            placeholder="Email"
+            placeholderTextColor="#666"
+            value={emailAddress}
+            onChangeText={setEmailAddress}
+            style={styles.inputField}
+          />
+          <TextInput
+            placeholder="Password"
+            placeholderTextColor="#666"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            style={styles.inputField}
+          />
+        </View>
 
-      <Link href="/reset" asChild>
-        <Pressable style={styles.button}>
-          <Text>Forgot password?</Text>
+        <Pressable style={styles.loginButton} onPress={onSignInPress}>
+          <Text style={styles.loginButtonText}>Sign In</Text>
         </Pressable>
-      </Link>
-      <Link href="/register" asChild>
-        <Pressable style={styles.button}>
-          <Text>Create Account</Text>
-        </Pressable>
-      </Link>
+
+        <View style={styles.linksContainer}>
+          <Link href="/reset" asChild>
+            <Pressable>
+              <Text style={styles.link}>Forgot password?</Text>
+            </Pressable>
+          </Link>
+          <Link href="/register" asChild>
+            <Pressable>
+              <Text style={styles.link}>Create Account</Text>
+            </Pressable>
+          </Link>
+        </View>
+      </View>
     </View>
   );
 };
@@ -77,21 +90,58 @@ const Login = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#000",
+    padding: 20,
+  },
+  formContainer: {
+    flex: 1,
     justifyContent: "center",
     padding: 20,
   },
+  title: {
+    fontSize: 32,
+    fontWeight: "bold",
+    color: "white",
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: "#666",
+    marginBottom: 32,
+  },
+  inputContainer: {
+    gap: 16,
+    marginBottom: 24,
+  },
   inputField: {
-    marginVertical: 4,
     height: 50,
     borderWidth: 1,
-    borderColor: "#6c47ff",
-    borderRadius: 4,
-    padding: 10,
-    backgroundColor: "#fff",
+    borderColor: "#333",
+    borderRadius: 8,
+    padding: 12,
+    backgroundColor: "#111",
+    color: "white",
   },
-  button: {
-    margin: 8,
+  loginButton: {
+    backgroundColor: "#6c47ff",
+    height: 50,
+    borderRadius: 8,
+    justifyContent: "center",
     alignItems: "center",
+    marginBottom: 24,
+  },
+  loginButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  linksContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  link: {
+    color: "#6c47ff",
+    fontSize: 14,
   },
 });
 
