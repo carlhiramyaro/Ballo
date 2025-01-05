@@ -1,6 +1,15 @@
-import { View, Text, ScrollView, TextInput, Pressable } from "react-native";
-import { useState } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  TextInput,
+  Pressable,
+  Animated,
+} from "react-native";
+import { useState, useRef } from "react";
 import { Ionicons } from "@expo/vector-icons";
+import { useAuth } from "@clerk/clerk-expo";
+import { router } from "expo-router";
 
 // Dummy data for available games
 const dummyGames = {
@@ -24,6 +33,27 @@ const dummyGames = {
 
 export default function Home() {
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [menuVisible, setMenuVisible] = useState(false);
+  const slideAnim = useRef(new Animated.Value(-300)).current; // Start menu off-screen
+  const { signOut } = useAuth();
+
+  const toggleMenu = () => {
+    const toValue = menuVisible ? -300 : 0;
+    Animated.spring(slideAnim, {
+      toValue,
+      useNativeDriver: true,
+    }).start();
+    setMenuVisible(!menuVisible);
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      router.replace("/login");
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
 
   // Generate week dates
   const getWeekDates = () => {
@@ -38,7 +68,96 @@ export default function Home() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#000" }}>
-      {/* Header */}
+      {/* Slide-out Menu */}
+      <Animated.View
+        style={{
+          position: "absolute",
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: 300,
+          backgroundColor: "#111",
+          zIndex: 100,
+          transform: [{ translateX: slideAnim }],
+        }}
+      >
+        {/* User Profile Section */}
+        <View
+          style={{
+            padding: 20,
+            paddingTop: 60,
+            borderBottomWidth: 1,
+            borderBottomColor: "#333",
+          }}
+        >
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <View
+              style={{
+                width: 50,
+                height: 50,
+                borderRadius: 25,
+                backgroundColor: "#333",
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <Text style={{ color: "white", fontSize: 24 }}>U</Text>
+            </View>
+            <Text style={{ color: "white", fontSize: 20, marginLeft: 15 }}>
+              User
+            </Text>
+          </View>
+        </View>
+
+        {/* Menu Items */}
+        <View style={{ padding: 20 }}>
+          <Pressable
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              marginBottom: 20,
+            }}
+            onPress={() => {}}
+          >
+            <Ionicons name="football-outline" size={24} color="white" />
+            <Text style={{ color: "white", fontSize: 18, marginLeft: 15 }}>
+              Games
+            </Text>
+          </Pressable>
+
+          <Pressable
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              marginBottom: 20,
+            }}
+            onPress={handleSignOut}
+          >
+            <Ionicons name="log-out-outline" size={24} color="white" />
+            <Text style={{ color: "white", fontSize: 18, marginLeft: 15 }}>
+              Sign Out
+            </Text>
+          </Pressable>
+        </View>
+      </Animated.View>
+
+      {/* Overlay when menu is open */}
+      {menuVisible && (
+        <Pressable
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            top: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            zIndex: 99,
+          }}
+          onPress={toggleMenu}
+        />
+      )}
+
+      {/* Header - Update the football icon to toggle menu */}
       <View style={{ padding: 20, paddingTop: 60, backgroundColor: "#111" }}>
         <View
           style={{
@@ -47,7 +166,9 @@ export default function Home() {
             justifyContent: "space-between",
           }}
         >
-          <Ionicons name="football-outline" size={24} color="white" />
+          <Pressable onPress={toggleMenu}>
+            <Ionicons name="football-outline" size={24} color="white" />
+          </Pressable>
           <Text style={{ color: "white", fontSize: 20, fontWeight: "600" }}>
             Open Games
           </Text>
