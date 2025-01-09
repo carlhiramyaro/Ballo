@@ -1,40 +1,29 @@
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-} from "@react-navigation/native";
-import { useFonts } from "expo-font";
-import { Slot, Stack, useSegments, useRouter } from "expo-router";
-import * as SplashScreen from "expo-splash-screen";
-import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
-import "react-native-reanimated";
-import * as SecureStore from "expo-secure-store";
-import { useColorScheme } from "@/hooks/useColorScheme";
+import { Stack } from "expo-router";
 import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
-import { View, ActivityIndicator } from "react-native";
+import * as SecureStore from "expo-secure-store";
+import { useEffect } from "react";
+import { useRouter, useSegments } from "expo-router";
 
-const CLERK_PUBLISHABLE_KEY =
-  process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "";
-
+// Token cache
 const tokenCache = {
   async getToken(key: string) {
     try {
       return SecureStore.getItemAsync(key);
-    } catch (error) {
+    } catch (err) {
       return null;
     }
   },
   async saveToken(key: string, value: string) {
     try {
-      await SecureStore.setItemAsync(key, value);
-    } catch (error) {
-      // Handle error silently
+      return SecureStore.setItemAsync(key, value);
+    } catch (err) {
+      return;
     }
   },
 };
 
-const InitialLayout = () => {
+// Initial auth state handler
+function InitialLayout() {
   const { isLoaded, isSignedIn } = useAuth();
   const segments = useSegments();
   const router = useRouter();
@@ -42,33 +31,38 @@ const InitialLayout = () => {
   useEffect(() => {
     if (!isLoaded) return;
 
-    const inTabsGroup = segments[0] === "(auth)";
+    const inAuthGroup = segments[0] === "(auth)";
+    const inPublicGroup = segments[0] === "(public)";
+    const inParkOwnerGroup = segments[0] === "(park-owner)";
 
-    // Only navigate if we're not already in the correct group
-    if (isSignedIn && !inTabsGroup && segments[0] !== "(auth)") {
-      router.replace("/(auth)/home");
-    } else if (!isSignedIn && segments[0] !== "(public)") {
-      router.replace("/(public)/login");
+    if (isSignedIn && !inAuthGroup && !inParkOwnerGroup) {
+      // Redirect to home if user is signed in and not in the (auth) or (park-owner) group
+      router.replace("/home");
+    } else if (!isSignedIn && !inPublicGroup) {
+      // Redirect to login if user is not signed in and not in the (public) group
+      router.replace("/login");
     }
-  }, [isLoaded, isSignedIn, segments]);
+  }, [isSignedIn, segments, isLoaded]);
 
-  // Don't render anything until Clerk is loaded
-  if (!isLoaded) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#0000ff" />
-      </View>
-    );
-  }
-
-  return <Slot />;
-};
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        animation: "slide_from_right",
+      }}
+    >
+      <Stack.Screen name="(auth)" />
+      <Stack.Screen name="(public)" />
+      <Stack.Screen name="(park-owner)" />
+    </Stack>
+  );
+}
 
 export default function RootLayout() {
   return (
     <ClerkProvider
-      publishableKey={CLERK_PUBLISHABLE_KEY}
       tokenCache={tokenCache}
+      publishableKey={process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ?? ""}
     >
       <InitialLayout />
     </ClerkProvider>

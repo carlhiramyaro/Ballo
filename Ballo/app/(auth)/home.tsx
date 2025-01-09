@@ -5,37 +5,42 @@ import {
   TextInput,
   Pressable,
   Animated,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { useAuth } from "@clerk/clerk-expo";
+import { useAuth, useUser } from "@clerk/clerk-expo";
 import { router } from "expo-router";
+import { API_URL } from "@env";
 
-// Dummy data for available games
-const dummyGames = {
-  "2024-03-07": [
-    {
-      id: 1,
-      location: "Central Park Field",
-      time: "18:00",
-      playersNeeded: 4,
-      level: "Intermediate",
-    },
-    {
-      id: 2,
-      location: "Riverside Soccer Complex",
-      time: "19:30",
-      playersNeeded: 2,
-      level: "Advanced",
-    },
-  ],
-};
+interface Game {
+  _id: string;
+  park: {
+    name: string;
+    location: {
+      address: string;
+    };
+  };
+  date: string;
+  time: string;
+  maxPlayers: number;
+  currentPlayers: Array<{
+    userId: string;
+    name: string;
+  }>;
+  level: string;
+}
 
 export default function Home() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [menuVisible, setMenuVisible] = useState(false);
   const slideAnim = useRef(new Animated.Value(-300)).current; // Start menu off-screen
   const { signOut } = useAuth();
+  const [games, setGames] = useState<Game[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useUser();
+  const isParkOwner = user?.unsafeMetadata?.role === "park_owner";
 
   const toggleMenu = () => {
     const toValue = menuVisible ? -300 : 0;
@@ -64,6 +69,54 @@ export default function Home() {
       dates.push(date);
     }
     return dates;
+  };
+
+  // Fetch games when date changes
+  useEffect(() => {
+    const fetchGames = async () => {
+      try {
+        setLoading(true);
+        console.log("Fetching from:", API_URL); // Debug log
+        const response = await fetch(
+          `${API_URL}/api/games?date=${selectedDate.toISOString()}`
+        );
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        setGames(data);
+      } catch (error) {
+        console.error("Error fetching games:", error);
+        // Show user-friendly error
+        Alert.alert(
+          "Error",
+          "Unable to load games. Please check your connection and try again."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGames();
+  }, [selectedDate]);
+
+  // Add this function to handle becoming a park owner
+  const handleBecomeParkOwner = async () => {
+    try {
+      await user?.update({
+        unsafeMetadata: {
+          ...user.unsafeMetadata,
+          role: "park_owner",
+        },
+      });
+
+      console.log("Role updated successfully"); // Debug log
+      toggleMenu();
+      router.push("/(park-owner)/parks");
+    } catch (error) {
+      console.error("Error updating user role:", error);
+      Alert.alert("Error", "Could not update user role. Please try again.");
+    }
   };
 
   return (
@@ -124,6 +177,42 @@ export default function Home() {
               Games
             </Text>
           </Pressable>
+
+          {!isParkOwner && (
+            <Pressable
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginBottom: 20,
+              }}
+              onPress={handleBecomeParkOwner}
+            >
+              <Ionicons name="business-outline" size={24} color="white" />
+              <Text style={{ color: "white", fontSize: 18, marginLeft: 15 }}>
+                Become a Park Owner
+              </Text>
+            </Pressable>
+          )}
+
+          {isParkOwner && (
+            <Pressable
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginBottom: 20,
+              }}
+              onPress={() => {
+                console.log("Navigating to parks screen"); // Debug log
+                toggleMenu();
+                router.push("/(park-owner)/parks");
+              }}
+            >
+              <Ionicons name="business-outline" size={24} color="white" />
+              <Text style={{ color: "white", fontSize: 18, marginLeft: 15 }}>
+                Manage Parks
+              </Text>
+            </Pressable>
+          )}
 
           <Pressable
             style={{
@@ -229,27 +318,35 @@ export default function Home() {
 
       {/* Games List */}
       <ScrollView style={{ flex: 1 }}>
-        {dummyGames["2024-03-07"] ? (
-          dummyGames["2024-03-07"].map((game) => (
-            <View
-              key={game.id}
+        {loading ? (
+          <ActivityIndicator
+            size="large"
+            color="#6c47ff"
+            style={{ marginTop: 20 }}
+          />
+        ) : games.length > 0 ? (
+          games.map((game) => (
+            <Pressable
+              key={game._id}
               style={{
                 backgroundColor: "#111",
                 margin: 10,
                 padding: 15,
                 borderRadius: 10,
               }}
+              onPress={() => router.push(`/game/${game._id}`)}
             >
               <Text style={{ color: "white", fontSize: 18, fontWeight: "600" }}>
-                {game.location}
+                {game.park.name}
               </Text>
               <Text style={{ color: "#888", marginTop: 5 }}>
-                {game.time} • {game.playersNeeded} players needed
+                {game.time} • {game.maxPlayers - game.currentPlayers.length}{" "}
+                spots left
               </Text>
               <Text style={{ color: "#666", marginTop: 5 }}>
                 Level: {game.level}
               </Text>
-            </View>
+            </Pressable>
           ))
         ) : (
           <View

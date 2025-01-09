@@ -28,19 +28,15 @@ const Register = () => {
     setLoading(true);
 
     try {
-      // Create the user on Clerk with CAPTCHA disabled
       await signUp.create({
         emailAddress,
         password,
         unsafeMetadata: {
-          skipCaptcha: true,
+          role: "user",
         },
       });
 
-      // Send verification Email
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
-
-      // change the UI to verify the email address
       setPendingVerification(true);
     } catch (err: any) {
       alert(err.errors[0].message);

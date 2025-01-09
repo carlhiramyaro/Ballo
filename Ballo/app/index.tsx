@@ -1,12 +1,12 @@
-import { View, Text, ActivityIndicator } from "react-native";
+import { Redirect } from "expo-router";
+import { useAuth } from "@clerk/clerk-expo";
 
-const StartPage = () => {
-  return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <Text>Hello</Text>
-      <ActivityIndicator size="large" color="#0000ff" />
-    </View>
-  );
-};
+export default function Index() {
+  const { isSignedIn } = useAuth();
 
-export default StartPage;
+  if (isSignedIn) {
+    return <Redirect href="/home" />;
+  }
+
+  return <Redirect href="/login" />;
+}
