@@ -42,7 +42,7 @@ export default function ParksManagement() {
         <Text style={styles.title}>My Parks</Text>
         <Pressable
           style={styles.addButton}
-          onPress={() => router.push("/park-owner/add-park")}
+          onPress={() => router.push("/(park-owner)/add-park")}
         >
           <Text style={styles.addButtonText}>Add Park</Text>
         </Pressable>

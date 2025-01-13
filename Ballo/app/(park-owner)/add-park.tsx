@@ -5,6 +5,7 @@ import {
   Pressable,
   StyleSheet,
   ScrollView,
+  Alert,
 } from "react-native";
 import { useState } from "react";
 import { router } from "expo-router";
@@ -32,18 +33,22 @@ export default function AddPark() {
       });
 
       if (response.ok) {
-        router.back();
+        router.push("/(park-owner)/parks");
       } else {
         throw new Error("Failed to create park");
       }
     } catch (error) {
       console.error("Error creating park:", error);
+      Alert.alert("Error", "Failed to create park. Please try again.");
     }
   };
 
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
+        <Pressable onPress={() => router.back()} style={styles.backButton}>
+          <Text style={styles.backButtonText}>← Back</Text>
+        </Pressable>
         <Text style={styles.title}>Add New Park</Text>
       </View>
 
@@ -127,5 +132,12 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "600",
+  },
+  backButton: {
+    marginBottom: 10,
+  },
+  backButtonText: {
+    color: "#6c47ff",
+    fontSize: 16,
   },
 });
