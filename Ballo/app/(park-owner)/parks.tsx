@@ -122,21 +122,33 @@ export default function Parks() {
       ) : (
         <ScrollView style={styles.parksList}>
           {parks.map((park) => (
-            <View key={park.id} style={styles.parkCard}>
+            <Pressable
+              key={park.id}
+              style={styles.parkCard}
+              onPress={() =>
+                router.push({
+                  pathname: `/(park-owner)/${park.id}`,
+                  params: { id: park.id },
+                })
+              }
+            >
               <View>
                 <Text style={styles.parkName}>{park.name}</Text>
-                <Text style={styles.parkAddress}>{park.address}</Text>
-                <Text style={styles.parkCity}>
-                  {park.city}, {park.state}
+                <Text style={styles.parkAddress}>{park.location.address}</Text>
+                <Text style={styles.parkStatus}>
+                  Status: {park.verificationStatus}
                 </Text>
               </View>
               <Pressable
-                onPress={() => handleDeletePark(park.id)}
+                onPress={(e) => {
+                  e.stopPropagation(); // Prevent triggering the parent's onPress
+                  handleDeletePark(park.id);
+                }}
                 style={styles.deleteButton}
               >
                 <Ionicons name="trash-outline" size={20} color="#ff4444" />
               </Pressable>
-            </View>
+            </Pressable>
           ))}
         </ScrollView>
       )}
@@ -253,7 +265,7 @@ const styles = StyleSheet.create({
     color: "#888",
     marginTop: 5,
   },
-  parkCity: {
+  parkStatus: {
     color: "#666",
     marginTop: 2,
   },
