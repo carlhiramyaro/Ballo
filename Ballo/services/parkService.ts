@@ -8,6 +8,7 @@ import {
   getDocs,
   query,
   where,
+  deleteDoc,
 } from "firebase/firestore";
 
 export interface Park {
@@ -45,14 +46,17 @@ const COLLECTION_NAME = "parks";
 
 export const parkService = {
   // Create a new park
-  async createPark(parkData: Omit<Park, "id">): Promise<string> {
+  async createPark(parkData: Omit<Park, "id" | "createdAt" | "updatedAt">) {
     try {
-      const docRef = await addDoc(collection(db, COLLECTION_NAME), {
+      const parksRef = collection(db, COLLECTION_NAME);
+      const newPark = {
         ...parkData,
         createdAt: new Date(),
         updatedAt: new Date(),
-      });
-      return docRef.id;
+      };
+
+      const docRef = await addDoc(parksRef, newPark);
+      return { id: docRef.id, ...newPark };
     } catch (error) {
       console.error("Error creating park:", error);
       throw error;
@@ -76,12 +80,10 @@ export const parkService = {
   },
 
   // Get parks by owner ID
-  async getParksByOwner(userId: string): Promise<Park[]> {
+  async getOwnerParks(ownerId: string) {
     try {
-      const q = query(
-        collection(db, COLLECTION_NAME),
-        where("owner.userId", "==", userId)
-      );
+      const parksRef = collection(db, COLLECTION_NAME);
+      const q = query(parksRef, where("owner.userId", "==", ownerId));
       const querySnapshot = await getDocs(q);
 
       return querySnapshot.docs.map((doc) => ({
@@ -89,7 +91,7 @@ export const parkService = {
         ...doc.data(),
       })) as Park[];
     } catch (error) {
-      console.error("Error getting owner parks:", error);
+      console.error("Error getting parks:", error);
       throw error;
     }
   },
@@ -128,6 +130,28 @@ export const parkService = {
       });
     } catch (error) {
       console.error("Error updating verification status:", error);
+      throw error;
+    }
+  },
+
+  async deletePark(parkId: string) {
+    try {
+      await deleteDoc(doc(db, COLLECTION_NAME, parkId));
+    } catch (error) {
+      console.error("Error deleting park:", error);
+      throw error;
+    }
+  },
+
+  async updatePark(parkId: string, parkData: Partial<Park>) {
+    try {
+      const parkRef = doc(db, COLLECTION_NAME, parkId);
+      await updateDoc(parkRef, {
+        ...parkData,
+        updatedAt: new Date(),
+      });
+    } catch (error) {
+      console.error("Error updating park:", error);
       throw error;
     }
   },

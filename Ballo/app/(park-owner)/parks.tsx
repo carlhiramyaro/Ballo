@@ -1,86 +1,215 @@
-import { View, Text, ScrollView, Pressable, StyleSheet } from "react-native";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  TextInput,
+  Alert,
+  Modal,
+  StyleSheet,
+  ActivityIndicator,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useAuth } from "../../contexts/AuthContext";
+import { parkService } from "../../services/parkService";
 import { router } from "expo-router";
-import { API_URL } from "@env";
-import { useAuth } from "@clerk/clerk-expo";
 
-interface Park {
-  _id: string;
-  name: string;
-  location: {
-    address: string;
-  };
-  verificationStatus: string;
-}
-
-export default function ParksManagement() {
-  const [parks, setParks] = useState<Park[]>([]);
-  const { getToken } = useAuth();
+export default function Parks() {
+  const [parks, setParks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [newPark, setNewPark] = useState({
+    name: "",
+    address: "",
+    city: "",
+    state: "",
+  });
+  const { getCurrentUser } = useAuth();
+  const user = getCurrentUser();
 
   useEffect(() => {
-    fetchMyParks();
+    fetchParks();
   }, []);
 
-  const fetchMyParks = async () => {
+  const fetchParks = async () => {
+    if (!user) return;
     try {
-      const token = await getToken();
-      const response = await fetch(`${API_URL}/api/parks/my-parks`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await response.json();
-      setParks(data);
+      setLoading(true);
+      const userParks = await parkService.getOwnerParks(user.uid);
+      setParks(userParks);
     } catch (error) {
       console.error("Error fetching parks:", error);
+      Alert.alert("Error", "Failed to load parks");
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleAddPark = async () => {
+    if (!user) return;
+
+    if (!newPark.name || !newPark.address || !newPark.city || !newPark.state) {
+      Alert.alert("Error", "Please fill in all fields");
+      return;
+    }
+
+    try {
+      await parkService.createPark({
+        ...newPark,
+        owner: {
+          userId: user.uid,
+          name: user.displayName || "Unknown",
+          contactEmail: user.email || "",
+        },
+        location: {
+          address: `${newPark.address}, ${newPark.city}, ${newPark.state}`,
+          coordinates: { latitude: 0, longitude: 0 }, // You'll want to add proper geocoding later
+        },
+        amenities: [],
+        verificationStatus: "pending",
+        documents: [],
+      });
+      setModalVisible(false);
+      setNewPark({ name: "", address: "", city: "", state: "" });
+      fetchParks(); // Refresh the parks list
+      Alert.alert("Success", "Park added successfully");
+    } catch (error) {
+      console.error("Error adding park:", error);
+      Alert.alert("Error", "Failed to add park");
+    }
+  };
+
+  const handleDeletePark = async (parkId: string) => {
+    Alert.alert("Delete Park", "Are you sure you want to delete this park?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await parkService.deletePark(parkId);
+            fetchParks(); // Refresh the parks list
+          } catch (error) {
+            console.error("Error deleting park:", error);
+            Alert.alert("Error", "Failed to delete park");
+          }
+        },
+      },
+    ]);
   };
 
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>My Parks</Text>
-        <Pressable
-          style={styles.addButton}
-          onPress={() => router.push("/(park-owner)/add-park")}
-        >
-          <Text style={styles.addButtonText}>Add Park</Text>
+        <Pressable onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={24} color="white" />
+        </Pressable>
+        <Text style={styles.headerTitle}>My Parks</Text>
+        <Pressable onPress={() => setModalVisible(true)}>
+          <Ionicons name="add" size={24} color="white" />
         </Pressable>
       </View>
 
-      <ScrollView style={styles.parksList}>
-        {parks.map((park) => (
-          <Pressable
-            key={park._id}
-            style={styles.parkItem}
-            onPress={() => router.push(`/park-owner/park/${park._id}`)}
-          >
-            <Text style={styles.parkName}>{park.name}</Text>
-            <Text style={styles.parkAddress}>{park.location.address}</Text>
-            <View
-              style={[
-                styles.statusBadge,
-                {
-                  backgroundColor:
-                    park.verificationStatus === "verified"
-                      ? "#4CAF50"
-                      : "#FFC107",
-                },
-              ]}
-            >
-              <Text style={styles.statusText}>{park.verificationStatus}</Text>
+      {/* Parks List */}
+      {loading ? (
+        <ActivityIndicator
+          size="large"
+          color="#6c47ff"
+          style={{ marginTop: 20 }}
+        />
+      ) : (
+        <ScrollView style={styles.parksList}>
+          {parks.map((park) => (
+            <View key={park.id} style={styles.parkCard}>
+              <View>
+                <Text style={styles.parkName}>{park.name}</Text>
+                <Text style={styles.parkAddress}>{park.address}</Text>
+                <Text style={styles.parkCity}>
+                  {park.city}, {park.state}
+                </Text>
+              </View>
+              <Pressable
+                onPress={() => handleDeletePark(park.id)}
+                style={styles.deleteButton}
+              >
+                <Ionicons name="trash-outline" size={20} color="#ff4444" />
+              </Pressable>
             </View>
-          </Pressable>
-        ))}
+          ))}
+        </ScrollView>
+      )}
 
-        {parks.length === 0 && (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>
-              You haven't added any parks yet.
-            </Text>
+      {/* Add Park Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Add New Park</Text>
+
+            <TextInput
+              style={styles.input}
+              placeholder="Park Name"
+              placeholderTextColor="#666"
+              value={newPark.name}
+              onChangeText={(text) =>
+                setNewPark((prev) => ({ ...prev, name: text }))
+              }
+            />
+
+            <TextInput
+              style={styles.input}
+              placeholder="Address"
+              placeholderTextColor="#666"
+              value={newPark.address}
+              onChangeText={(text) =>
+                setNewPark((prev) => ({ ...prev, address: text }))
+              }
+            />
+
+            <TextInput
+              style={styles.input}
+              placeholder="City"
+              placeholderTextColor="#666"
+              value={newPark.city}
+              onChangeText={(text) =>
+                setNewPark((prev) => ({ ...prev, city: text }))
+              }
+            />
+
+            <TextInput
+              style={styles.input}
+              placeholder="State"
+              placeholderTextColor="#666"
+              value={newPark.state}
+              onChangeText={(text) =>
+                setNewPark((prev) => ({ ...prev, state: text }))
+              }
+            />
+
+            <View style={styles.modalButtons}>
+              <Pressable
+                style={[styles.button, styles.cancelButton]}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.buttonText}>Cancel</Text>
+              </Pressable>
+
+              <Pressable
+                style={[styles.button, styles.addButton]}
+                onPress={handleAddPark}
+              >
+                <Text style={styles.buttonText}>Add Park</Text>
+              </Pressable>
+            </View>
           </View>
-        )}
-      </ScrollView>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -91,68 +220,92 @@ const styles = StyleSheet.create({
     backgroundColor: "#000",
   },
   header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     padding: 20,
     paddingTop: 60,
     backgroundColor: "#111",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
+  headerTitle: {
     color: "white",
-  },
-  addButton: {
-    backgroundColor: "#6c47ff",
-    padding: 10,
-    borderRadius: 8,
-  },
-  addButtonText: {
-    color: "white",
+    fontSize: 20,
     fontWeight: "600",
   },
   parksList: {
-    flex: 1,
-    padding: 15,
+    padding: 20,
   },
-  parkItem: {
+  parkCard: {
     backgroundColor: "#111",
     padding: 15,
     borderRadius: 10,
     marginBottom: 10,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   parkName: {
+    color: "white",
     fontSize: 18,
     fontWeight: "600",
-    color: "white",
   },
   parkAddress: {
     color: "#888",
     marginTop: 5,
   },
-  statusBadge: {
-    position: "absolute",
-    right: 15,
-    top: 15,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 15,
+  parkCity: {
+    color: "#666",
+    marginTop: 2,
   },
-  statusText: {
-    color: "white",
-    fontSize: 12,
-    fontWeight: "600",
+  deleteButton: {
+    padding: 10,
   },
-  emptyState: {
+  modalContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 40,
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
-  emptyStateText: {
-    color: "#666",
-    fontSize: 16,
-    textAlign: "center",
+  modalContent: {
+    backgroundColor: "#111",
+    padding: 20,
+    borderRadius: 10,
+    width: "90%",
+  },
+  modalTitle: {
+    color: "white",
+    fontSize: 20,
+    fontWeight: "600",
+    marginBottom: 20,
+  },
+  input: {
+    backgroundColor: "#222",
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 15,
+    color: "white",
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 20,
+  },
+  button: {
+    flex: 1,
+    padding: 15,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  cancelButton: {
+    backgroundColor: "#333",
+    marginRight: 10,
+  },
+  addButton: {
+    backgroundColor: "#6c47ff",
+    marginLeft: 10,
+  },
+  buttonText: {
+    color: "white",
+    fontWeight: "600",
   },
 });
