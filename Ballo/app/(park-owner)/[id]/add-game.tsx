@@ -10,12 +10,13 @@ import {
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { Picker } from "@react-native-picker/picker";
-import { Game, gameService } from "../../../services/gameService";
+import { gameService, Game } from "../../../services/gameService";
 import { useAuth } from "../../../contexts/AuthContext";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function AddGame() {
-  const { parkId, parkName } = useLocalSearchParams();
+  const { id } = useLocalSearchParams();
   const { getCurrentUser } = useAuth();
   const user = getCurrentUser();
 
@@ -41,8 +42,8 @@ export default function AddGame() {
       }
 
       const newGame = {
-        parkId: parkId as string,
-        parkName: parkName as string,
+        parkId: id as string,
+        parkName: "Test Park",
         date: gameData.date.toISOString().split("T")[0],
         time: gameData.time.toLocaleTimeString([], {
           hour: "2-digit",
@@ -73,9 +74,9 @@ export default function AddGame() {
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} style={styles.backButton}>
-          <Text style={styles.backButtonText}>← Back</Text>
+          <Ionicons name="arrow-back" size={24} color="white" />
         </Pressable>
-        <Text style={styles.title}>Create New Game</Text>
+        <Text style={styles.headerTitle}>Create New Game</Text>
       </View>
 
       <View style={styles.form}>
@@ -90,6 +91,9 @@ export default function AddGame() {
                 date: selectedDate || prev.date,
               }));
             }}
+            themeVariant="dark"
+            textColor="white"
+            style={styles.dateTimePicker}
           />
         </View>
 
@@ -104,6 +108,9 @@ export default function AddGame() {
                 time: selectedDate || prev.time,
               }));
             }}
+            themeVariant="dark"
+            textColor="white"
+            style={styles.dateTimePicker}
           />
         </View>
 
@@ -180,14 +187,17 @@ const styles = StyleSheet.create({
     backgroundColor: "#000",
   },
   header: {
+    flexDirection: "row",
+    alignItems: "center",
     padding: 20,
     paddingTop: 60,
     backgroundColor: "#111",
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
+  headerTitle: {
     color: "white",
+    fontSize: 20,
+    fontWeight: "600",
+    marginLeft: 15,
   },
   form: {
     padding: 20,
@@ -229,10 +239,11 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   backButton: {
-    marginBottom: 10,
+    padding: 5,
   },
-  backButtonText: {
-    color: "#6c47ff",
-    fontSize: 16,
+  dateTimePicker: {
+    backgroundColor: "#111",
+    height: 50,
+    marginTop: 5,
   },
 });

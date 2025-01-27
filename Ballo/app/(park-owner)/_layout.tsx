@@ -5,7 +5,6 @@ export default function ParkOwnerLayout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="parks" />
       <Stack.Screen name="[id]" />
-      <Stack.Screen name="[id]/add-game" />
     </Stack>
   );
 }

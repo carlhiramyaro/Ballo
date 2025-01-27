@@ -12,26 +12,9 @@ import { useState, useRef, useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../../contexts/AuthContext";
 import { router } from "expo-router";
-import { EXPO_PUBLIC_API_URL } from "@env";
 import { userService } from "../../services/userService";
-
-interface Game {
-  _id: string;
-  park: {
-    name: string;
-    location: {
-      address: string;
-    };
-  };
-  date: string;
-  time: string;
-  maxPlayers: number;
-  currentPlayers: Array<{
-    userId: string;
-    name: string;
-  }>;
-  level: string;
-}
+import { gameService } from "../../services/gameService";
+import { Game } from "../../services/gameService"; // Import Game type
 
 export default function Home() {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -77,15 +60,10 @@ export default function Home() {
     const fetchGames = async () => {
       try {
         setLoading(true);
-        console.log("Fetching from:", EXPO_PUBLIC_API_URL);
-        const response = await fetch(
-          `${EXPO_PUBLIC_API_URL}/api/games?date=${selectedDate.toISOString()}`
-        );
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        setGames(data);
+        // Format the date to match our storage format (YYYY-MM-DD)
+        const formattedDate = selectedDate.toISOString().split("T")[0];
+        const gamesData = await gameService.getUpcomingGames(formattedDate);
+        setGames(gamesData);
       } catch (error) {
         console.error("Error fetching games:", error);
         Alert.alert(
@@ -356,17 +334,17 @@ export default function Home() {
         ) : games.length > 0 ? (
           games.map((game) => (
             <Pressable
-              key={game._id}
+              key={game.id}
               style={{
                 backgroundColor: "#111",
                 margin: 10,
                 padding: 15,
                 borderRadius: 10,
               }}
-              onPress={() => router.push(`/game/${game._id}`)}
+              onPress={() => router.push(`/game/${game.id}`)}
             >
               <Text style={{ color: "white", fontSize: 18, fontWeight: "600" }}>
-                {game.park.name}
+                {game.parkName}
               </Text>
               <Text style={{ color: "#888", marginTop: 5 }}>
                 {game.time} • {game.maxPlayers - game.currentPlayers.length}{" "}

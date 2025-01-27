@@ -10,9 +10,9 @@ import {
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { parkService } from "../../services/parkService";
-import { gameService } from "../../services/gameService";
-import { useAuth } from "../../contexts/AuthContext";
+import { parkService } from "../../../services/parkService";
+import { gameService } from "../../../services/gameService";
+import { useAuth } from "../../../contexts/AuthContext";
 
 export default function ParkDetail() {
   const { id } = useLocalSearchParams();
@@ -85,12 +85,13 @@ export default function ParkDetail() {
             <Text style={styles.sectionTitle}>Upcoming Games</Text>
             <Pressable
               style={styles.addButton}
-              onPress={() =>
+              onPress={() => {
+                console.log("Navigating to add game with id:", id); // Debug log
                 router.push({
-                  pathname: `/park-owner/${id}/add-game`,
-                  params: { parkName: park.name },
-                })
-              }
+                  pathname: `/(park-owner)/${id}/add-game`,
+                  params: { id: id },
+                });
+              }}
             >
               <Text style={styles.addButtonText}>Add Game</Text>
             </Pressable>
@@ -106,6 +107,11 @@ export default function ParkDetail() {
                   Players: {game.currentPlayers.length}/{game.maxPlayers}
                 </Text>
                 <Text style={styles.gameDetail}>Level: {game.level}</Text>
+                {game.description && (
+                  <Text style={styles.gameDetail}>
+                    Note: {game.description}
+                  </Text>
+                )}
               </View>
             ))
           ) : (

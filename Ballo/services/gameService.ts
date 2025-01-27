@@ -76,16 +76,22 @@ export const gameService = {
     }
   },
 
-  async getUpcomingGames() {
+  async getUpcomingGames(selectedDate?: string) {
     try {
       const gamesRef = collection(db, "games");
-      const q = query(
-        gamesRef,
-        where("status", "==", "upcoming"),
-        where("date", ">=", new Date().toISOString().split("T")[0])
-      );
-      const querySnapshot = await getDocs(q);
+      let q;
 
+      if (selectedDate) {
+        q = query(
+          gamesRef,
+          where("date", "==", selectedDate),
+          where("status", "==", "upcoming")
+        );
+      } else {
+        q = query(gamesRef, where("status", "==", "upcoming"));
+      }
+
+      const querySnapshot = await getDocs(q);
       return querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
