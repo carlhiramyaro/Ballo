@@ -1,37 +1,12 @@
 import React from "react";
 import { Stack } from "expo-router";
 
-const PublicLayout = () => {
+export default function PublicLayout() {
   return (
-    <Stack
-      screenOptions={{
-        headerStyle: {
-          backgroundColor: "#6c47ff",
-        },
-        headerTintColor: "#fff",
-        headerBackTitle: "Back",
-      }}
-    >
-      <Stack.Screen
-        name="login"
-        options={{
-          headerTitle: "Ballo",
-        }}
-      ></Stack.Screen>
-      <Stack.Screen
-        name="register"
-        options={{
-          headerTitle: "Create Account",
-        }}
-      ></Stack.Screen>
-      <Stack.Screen
-        name="reset"
-        options={{
-          headerTitle: "Reset Password",
-        }}
-      ></Stack.Screen>
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="sign-in" />
+      <Stack.Screen name="sign-up" />
+      <Stack.Screen name="reset" />
     </Stack>
   );
-};
-
-export default PublicLayout;
+}

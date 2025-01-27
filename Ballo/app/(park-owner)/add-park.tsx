@@ -8,12 +8,12 @@ import {
   Alert,
 } from "react-native";
 import { useState } from "react";
-import { router } from "expo-router";
-import { useAuth } from "@clerk/clerk-expo";
-import { EXPO_PUBLIC_API_URL } from "@env";
+import { useRouter } from "expo-router";
+import { parkService } from "../../services/parkService";
+import { auth } from "../../firebaseConfig";
 
 export default function AddPark() {
-  const { getToken } = useAuth();
+  const router = useRouter();
   const [parkData, setParkData] = useState({
     name: "",
     address: "",
@@ -31,27 +31,17 @@ export default function AddPark() {
 
   const handleSubmit = async () => {
     try {
-      if (!EXPO_PUBLIC_API_URL) {
-        console.error("API URL is not configured");
-        Alert.alert(
-          "Configuration Error",
-          "API URL is not set. Please check your environment configuration."
-        );
+      if (!auth.currentUser) {
+        Alert.alert("Error", "You must be logged in to create a park");
         return;
       }
 
-      console.log("API URL:", EXPO_PUBLIC_API_URL);
-      const token = await getToken();
-      console.log("Token obtained:", !!token);
-
-      // Validate required fields
       if (!parkData.name || !parkData.address) {
         Alert.alert("Error", "Park name and address are required");
         return;
       }
 
-      // Create the data structure expected by the backend
-      const dataToSend = {
+      const newPark = {
         name: parkData.name,
         location: {
           address: parkData.address,
@@ -60,55 +50,22 @@ export default function AddPark() {
             longitude: 0,
           },
         },
+        owner: {
+          userId: auth.currentUser.uid,
+          name: auth.currentUser.displayName || "Unknown",
+          contactEmail: parkData.contactEmail || auth.currentUser.email || "",
+          phone: parkData.phone,
+        },
         amenities: parkData.amenities,
-        contactEmail: parkData.contactEmail,
-        phone: parkData.phone,
+        verificationStatus: "pending" as const,
+        documents: [],
       };
 
-      console.log("Sending data:", dataToSend);
-
-      const response = await fetch(`${EXPO_PUBLIC_API_URL}/api/parks`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(dataToSend),
-      });
-
-      // Add these debug logs
-      console.log("Response status:", response.status);
-      console.log(
-        "Response headers:",
-        Object.fromEntries(response.headers.entries())
-      );
-      const rawText = await response.text(); // Get raw response text
-      console.log("Raw response:", rawText);
-
-      // Try parsing the response only if it looks like JSON
-      let responseData;
-      try {
-        responseData = JSON.parse(rawText);
-      } catch (parseError) {
-        console.error("Failed to parse response as JSON:", parseError);
-        throw new Error("Server returned invalid JSON response");
-      }
-
-      if (!response.ok) {
-        throw new Error(
-          responseData?.message ||
-            `Failed to create park: ${response.status} ${response.statusText}`
-        );
-      }
-
+      await parkService.createPark(newPark);
       router.push("/(park-owner)/parks");
-    } catch (error: any) {
-      console.error("Detailed error:", error);
-      Alert.alert(
-        "Error",
-        error.message ||
-          "Failed to create park. Please check your internet connection and try again."
-      );
+    } catch (error) {
+      console.error("Error creating park:", error);
+      Alert.alert("Error", "Failed to create park. Please try again.");
     }
   };
 

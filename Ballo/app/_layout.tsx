@@ -3,6 +3,7 @@ import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
 import * as SecureStore from "expo-secure-store";
 import { useEffect } from "react";
 import { useRouter, useSegments } from "expo-router";
+import { AuthProvider } from "../contexts/AuthContext";
 
 // Token cache
 const tokenCache = {
@@ -60,11 +61,17 @@ function InitialLayout() {
 
 export default function RootLayout() {
   return (
-    <ClerkProvider
-      tokenCache={tokenCache}
-      publishableKey={process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ?? ""}
-    >
-      <InitialLayout />
-    </ClerkProvider>
+    <AuthProvider>
+      <ClerkProvider
+        tokenCache={tokenCache}
+        publishableKey={process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ?? ""}
+      >
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(public)" />
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="(park-owner)" />
+        </Stack>
+      </ClerkProvider>
+    </AuthProvider>
   );
 }
