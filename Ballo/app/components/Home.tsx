@@ -188,6 +188,25 @@ export default function Home() {
 
         {/* Menu Items */}
         <View style={{ padding: 20 }}>
+          {/* Upcoming Games Option */}
+          <Pressable
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              marginBottom: 20,
+            }}
+            onPress={() => {
+              toggleMenu();
+              router.push("/(tabs)/upcoming");
+            }}
+          >
+            <Ionicons name="calendar-outline" size={24} color="white" />
+            <Text style={{ color: "white", fontSize: 18, marginLeft: 15 }}>
+              Upcoming Games
+            </Text>
+          </Pressable>
+
+          {/* Existing Park Owner Option */}
           {userRole === "user" ? (
             <Pressable
               style={{
@@ -221,6 +240,7 @@ export default function Home() {
             </Pressable>
           )}
 
+          {/* Sign Out Option */}
           <Pressable
             style={{
               flexDirection: "row",

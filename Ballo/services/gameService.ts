@@ -10,7 +10,9 @@ import {
   updateDoc,
   Timestamp,
   getDoc,
+  arrayUnion,
 } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
 export interface Game {
   id?: string;
@@ -102,19 +104,37 @@ export const gameService = {
     }
   },
 
-  async joinGame(gameId: string, userData: { userId: string; name: string }) {
+  async joinGame(gameId: string, player: { userId: string; name: string }) {
     try {
       const gameRef = doc(db, "games", gameId);
+      const gameDoc = await getDoc(gameRef);
+
+      if (!gameDoc.exists()) {
+        throw new Error("Game not found");
+      }
+
+      const gameData = gameDoc.data();
+      if (gameData.currentPlayers.length >= gameData.maxPlayers) {
+        throw new Error("Game is full");
+      }
+
+      if (
+        gameData.currentPlayers.some((p: any) => p.userId === player.userId)
+      ) {
+        throw new Error("Already joined");
+      }
+
+      const playerData = {
+        userId: player.userId,
+        name: player.name,
+        joinedAt: new Date().toISOString(),
+      };
+
       await updateDoc(gameRef, {
-        currentPlayers: [
-          ...(await this.getGame(gameId)).currentPlayers,
-          {
-            ...userData,
-            joinedAt: new Date(),
-          },
-        ],
-        updatedAt: new Date(),
+        currentPlayers: arrayUnion(playerData),
       });
+
+      console.log("Joined game with player data:", playerData);
     } catch (error) {
       console.error("Error joining game:", error);
       throw error;
@@ -155,6 +175,32 @@ export const gameService = {
       });
     } catch (error) {
       console.error("Error cancelling game:", error);
+      throw error;
+    }
+  },
+
+  async getUserGames(userId: string) {
+    try {
+      const gamesRef = collection(db, "games");
+      const q = query(gamesRef, where("status", "==", "upcoming"));
+
+      const querySnapshot = await getDocs(q);
+      const games = querySnapshot.docs.map(
+        (doc) =>
+          ({
+            id: doc.id,
+            ...doc.data(),
+          } as Game)
+      );
+
+      const userGames = games.filter((game) =>
+        game.currentPlayers.some((player) => player.userId === userId)
+      );
+
+      console.log("Found games:", userGames); // Debug log
+      return userGames;
+    } catch (error) {
+      console.error("Error getting user games:", error);
       throw error;
     }
   },
