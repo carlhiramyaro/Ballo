@@ -10,14 +10,19 @@
     "newArchEnabled": true,
     "ios": {
       "bundleIdentifier": "com.carlhiramyaro.ballo",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "buildNumber": "1.0.0",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.carlhiramyaro.ballo",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "versionCode": 1
     },
     "web": {
       "bundler": "metro",
@@ -40,6 +45,11 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "a2b926c2-ff26-41e6-92e4-f299cc8c8a05"
+      }
     }
   }
 }

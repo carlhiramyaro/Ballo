@@ -1,0 +1,42 @@
+{
+  "cli": {
+    "version": ">= 5.9.1",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_Z2l2aW5nLWRlZXItMzcuY2xlcmsuYWNjb3VudHMuZGV2JA",
+        "FIREBASE_API_KEY": "AIzaSyCyVgxs5ghtAXHt7nzJZ5WDV6Utl5kN4To",
+        "FIREBASE_AUTH_DOMAIN": "ballo-6a80a.firebaseapp.com",
+        "FIREBASE_PROJECT_ID": "ballo-6a80a",
+        "FIREBASE_STORAGE_BUCKET": "ballo-6a80a.appspot.com",
+        "FIREBASE_MESSAGING_SENDER_ID": "171403231138",
+        "FIREBASE_APP_ID": "1:171403231138:web:your-app-id-suffix"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_Z2l2aW5nLWRlZXItMzcuY2xlcmsuYWNjb3VudHMuZGV2JA",
+        "FIREBASE_API_KEY": "AIzaSyCyVgxs5ghtAXHt7nzJZ5WDV6Utl5kN4To",
+        "FIREBASE_AUTH_DOMAIN": "ballo-6a80a.firebaseapp.com",
+        "FIREBASE_PROJECT_ID": "ballo-6a80a",
+        "FIREBASE_STORAGE_BUCKET": "ballo-6a80a.appspot.com",
+        "FIREBASE_MESSAGING_SENDER_ID": "171403231138",
+        "FIREBASE_APP_ID": "1:171403231138:web:your-app-id-suffix"
+      }
+    },
+    "production": {
+      "autoIncrement": true
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
