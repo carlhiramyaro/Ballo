@@ -6,11 +6,14 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  Modal,
 } from "react-native";
 import { useState } from "react";
 import { useRouter } from "expo-router";
 import { parkService } from "../../services/parkService";
 import { auth } from "../../firebaseConfig";
+import LocationPicker from "../../components/LocationPicker";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function AddPark() {
   const router = useRouter();
@@ -28,6 +31,11 @@ export default function AddPark() {
     contactEmail: "",
     phone: "",
   });
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
 
   const handleSubmit = async () => {
     try {
@@ -36,8 +44,16 @@ export default function AddPark() {
         return;
       }
 
-      if (!parkData.name || !parkData.address) {
-        Alert.alert("Error", "Park name and address are required");
+      if (!parkData.name) {
+        Alert.alert("Error", "Park name is required");
+        return;
+      }
+
+      if (
+        parkData.location.coordinates.latitude === 0 &&
+        parkData.location.coordinates.longitude === 0
+      ) {
+        Alert.alert("Error", "Please select park location on map");
         return;
       }
 
@@ -45,10 +61,7 @@ export default function AddPark() {
         name: parkData.name,
         location: {
           address: parkData.address,
-          coordinates: {
-            latitude: 0, // You might want to get real coordinates
-            longitude: 0,
-          },
+          coordinates: parkData.location.coordinates,
         },
         owner: {
           userId: auth.currentUser.uid,
@@ -93,22 +106,78 @@ export default function AddPark() {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Address</Text>
+          <Text style={styles.label}>Address (Optional)</Text>
           <TextInput
             style={styles.input}
             value={parkData.address}
             onChangeText={(text) =>
-              setParkData((prev) => ({ ...prev, address: text }))
+              setParkData((prev) => ({
+                ...prev,
+                address: text,
+                location: { ...prev.location, address: text },
+              }))
             }
             placeholder="Enter park address"
             placeholderTextColor="#666"
           />
         </View>
 
+        <Pressable
+          style={[
+            styles.mapPickerButton,
+            parkData.location.coordinates.latitude !== 0 &&
+              styles.mapPickerButtonSelected,
+          ]}
+          onPress={() => setShowLocationPicker(true)}
+        >
+          <Ionicons
+            name="location"
+            size={20}
+            color={
+              parkData.location.coordinates.latitude !== 0 ? "#6c47ff" : "white"
+            }
+          />
+          <Text
+            style={[
+              styles.mapPickerButtonText,
+              parkData.location.coordinates.latitude !== 0 &&
+                styles.mapPickerButtonTextSelected,
+            ]}
+          >
+            {parkData.location.coordinates.latitude !== 0
+              ? "Location Selected (Tap to Change)"
+              : "Select Location on Map"}
+          </Text>
+        </Pressable>
+
         <Pressable style={styles.submitButton} onPress={handleSubmit}>
           <Text style={styles.submitButtonText}>Add Park</Text>
         </Pressable>
       </View>
+
+      <Modal
+        visible={showLocationPicker}
+        animationType="slide"
+        presentationStyle="fullScreen"
+      >
+        <LocationPicker
+          initialLocation={selectedLocation || undefined}
+          onLocationSelect={(location) => {
+            setSelectedLocation(location);
+            setParkData((prev) => ({
+              ...prev,
+              location: {
+                ...prev.location,
+                coordinates: {
+                  latitude: location.latitude,
+                  longitude: location.longitude,
+                },
+              },
+            }));
+          }}
+          onClose={() => setShowLocationPicker(false)}
+        />
+      </Modal>
     </ScrollView>
   );
 }
@@ -165,5 +234,26 @@ const styles = StyleSheet.create({
   backButtonText: {
     color: "#6c47ff",
     fontSize: 16,
+  },
+  mapPickerButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#2c2c2c",
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  mapPickerButtonText: {
+    color: "white",
+    marginLeft: 8,
+    fontSize: 16,
+  },
+  mapPickerButtonSelected: {
+    backgroundColor: "#1a1a1a",
+    borderWidth: 1,
+    borderColor: "#6c47ff",
+  },
+  mapPickerButtonTextSelected: {
+    color: "#6c47ff",
   },
 });

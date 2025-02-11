@@ -12,6 +12,7 @@ import { useLocalSearchParams, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { gameService } from "../../services/gameService";
 import { useAuth } from "../../contexts/AuthContext";
+import { openDirections } from "../../utils/mapUtils";
 
 interface Player {
   userId: string;
@@ -27,6 +28,13 @@ interface Game {
   currentPlayers: Player[];
   price?: number;
   description?: string;
+  parkLocation: {
+    address: string;
+    coordinates?: {
+      latitude: number;
+      longitude: number;
+    };
+  };
 }
 
 export default function GameDetail() {
@@ -87,6 +95,12 @@ export default function GameDetail() {
     }
   };
 
+  const handleGetDirections = () => {
+    if (game?.parkLocation) {
+      openDirections(game.parkLocation.coordinates, game.parkLocation.address);
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.container}>
@@ -128,6 +142,13 @@ export default function GameDetail() {
           {game.description && (
             <Text style={styles.description}>{game.description}</Text>
           )}
+          <Pressable
+            style={styles.directionsButton}
+            onPress={handleGetDirections}
+          >
+            <Ionicons name="navigate-outline" size={20} color="white" />
+            <Text style={styles.directionsButtonText}>Get Directions</Text>
+          </Pressable>
         </View>
 
         <View style={styles.playersSection}>
@@ -246,5 +267,18 @@ const styles = StyleSheet.create({
     color: "white",
     textAlign: "center",
     marginTop: 20,
+  },
+  directionsButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#2c2c2c",
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  directionsButtonText: {
+    color: "white",
+    marginLeft: 8,
+    fontSize: 16,
   },
 });

@@ -16,7 +16,7 @@ export interface Park {
   name: string;
   location: {
     address: string;
-    coordinates: {
+    coordinates?: {
       latitude: number;
       longitude: number;
     };

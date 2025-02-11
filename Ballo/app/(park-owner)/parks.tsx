@@ -18,13 +18,6 @@ import { router } from "expo-router";
 export default function Parks() {
   const [parks, setParks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [newPark, setNewPark] = useState({
-    name: "",
-    address: "",
-    city: "",
-    state: "",
-  });
   const { getCurrentUser } = useAuth();
   const user = getCurrentUser();
 
@@ -43,40 +36,6 @@ export default function Parks() {
       Alert.alert("Error", "Failed to load parks");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleAddPark = async () => {
-    if (!user) return;
-
-    if (!newPark.name || !newPark.address || !newPark.city || !newPark.state) {
-      Alert.alert("Error", "Please fill in all fields");
-      return;
-    }
-
-    try {
-      await parkService.createPark({
-        ...newPark,
-        owner: {
-          userId: user.uid,
-          name: user.displayName || "Unknown",
-          contactEmail: user.email || "",
-        },
-        location: {
-          address: `${newPark.address}, ${newPark.city}, ${newPark.state}`,
-          coordinates: { latitude: 0, longitude: 0 }, // You'll want to add proper geocoding later
-        },
-        amenities: [],
-        verificationStatus: "pending",
-        documents: [],
-      });
-      setModalVisible(false);
-      setNewPark({ name: "", address: "", city: "", state: "" });
-      fetchParks(); // Refresh the parks list
-      Alert.alert("Success", "Park added successfully");
-    } catch (error) {
-      console.error("Error adding park:", error);
-      Alert.alert("Error", "Failed to add park");
     }
   };
 
@@ -107,7 +66,7 @@ export default function Parks() {
           <Ionicons name="arrow-back" size={24} color="white" />
         </Pressable>
         <Text style={styles.headerTitle}>My Parks</Text>
-        <Pressable onPress={() => setModalVisible(true)}>
+        <Pressable onPress={() => router.push("/(park-owner)/add-park")}>
           <Ionicons name="add" size={24} color="white" />
         </Pressable>
       </View>
@@ -125,12 +84,7 @@ export default function Parks() {
             <Pressable
               key={park.id}
               style={styles.parkCard}
-              onPress={() =>
-                router.push({
-                  pathname: `/(park-owner)/${park.id}`,
-                  params: { id: park.id },
-                })
-              }
+              onPress={() => router.push(`/(park-owner)/${park.id}`)}
             >
               <View>
                 <Text style={styles.parkName}>{park.name}</Text>
@@ -141,7 +95,7 @@ export default function Parks() {
               </View>
               <Pressable
                 onPress={(e) => {
-                  e.stopPropagation(); // Prevent triggering the parent's onPress
+                  e.stopPropagation();
                   handleDeletePark(park.id);
                 }}
                 style={styles.deleteButton}
@@ -152,76 +106,6 @@ export default function Parks() {
           ))}
         </ScrollView>
       )}
-
-      {/* Add Park Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Add New Park</Text>
-
-            <TextInput
-              style={styles.input}
-              placeholder="Park Name"
-              placeholderTextColor="#666"
-              value={newPark.name}
-              onChangeText={(text) =>
-                setNewPark((prev) => ({ ...prev, name: text }))
-              }
-            />
-
-            <TextInput
-              style={styles.input}
-              placeholder="Address"
-              placeholderTextColor="#666"
-              value={newPark.address}
-              onChangeText={(text) =>
-                setNewPark((prev) => ({ ...prev, address: text }))
-              }
-            />
-
-            <TextInput
-              style={styles.input}
-              placeholder="City"
-              placeholderTextColor="#666"
-              value={newPark.city}
-              onChangeText={(text) =>
-                setNewPark((prev) => ({ ...prev, city: text }))
-              }
-            />
-
-            <TextInput
-              style={styles.input}
-              placeholder="State"
-              placeholderTextColor="#666"
-              value={newPark.state}
-              onChangeText={(text) =>
-                setNewPark((prev) => ({ ...prev, state: text }))
-              }
-            />
-
-            <View style={styles.modalButtons}>
-              <Pressable
-                style={[styles.button, styles.cancelButton]}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={styles.buttonText}>Cancel</Text>
-              </Pressable>
-
-              <Pressable
-                style={[styles.button, styles.addButton]}
-                onPress={handleAddPark}
-              >
-                <Text style={styles.buttonText}>Add Park</Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
@@ -271,53 +155,5 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     padding: 10,
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
-  },
-  modalContent: {
-    backgroundColor: "#111",
-    padding: 20,
-    borderRadius: 10,
-    width: "90%",
-  },
-  modalTitle: {
-    color: "white",
-    fontSize: 20,
-    fontWeight: "600",
-    marginBottom: 20,
-  },
-  input: {
-    backgroundColor: "#222",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 15,
-    color: "white",
-  },
-  modalButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 20,
-  },
-  button: {
-    flex: 1,
-    padding: 15,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  cancelButton: {
-    backgroundColor: "#333",
-    marginRight: 10,
-  },
-  addButton: {
-    backgroundColor: "#6c47ff",
-    marginLeft: 10,
-  },
-  buttonText: {
-    color: "white",
-    fontWeight: "600",
   },
 });

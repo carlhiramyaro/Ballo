@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -14,11 +14,13 @@ import { gameService, Game } from "../../../services/gameService";
 import { useAuth } from "../../../contexts/AuthContext";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
+import { parkService } from "../../../services/parkService";
 
 export default function AddGame() {
   const { id } = useLocalSearchParams();
   const { getCurrentUser } = useAuth();
   const user = getCurrentUser();
+  const [park, setPark] = useState<any>(null);
 
   const [gameData, setGameData] = useState({
     date: new Date(),
@@ -28,6 +30,19 @@ export default function AddGame() {
     description: "",
     price: "",
   });
+
+  useEffect(() => {
+    const fetchPark = async () => {
+      try {
+        const parkData = await parkService.getPark(id as string);
+        setPark(parkData);
+      } catch (error) {
+        console.error("Error fetching park:", error);
+        Alert.alert("Error", "Failed to load park details");
+      }
+    };
+    fetchPark();
+  }, [id]);
 
   const handleSubmit = async () => {
     try {
@@ -41,9 +56,14 @@ export default function AddGame() {
         return;
       }
 
+      if (!park) {
+        Alert.alert("Error", "Park information not found");
+        return;
+      }
+
       const newGame = {
         parkId: id as string,
-        parkName: "Test Park",
+        parkName: park.name,
         date: gameData.date.toISOString().split("T")[0],
         time: gameData.time.toLocaleTimeString([], {
           hour: "2-digit",
@@ -59,6 +79,10 @@ export default function AddGame() {
           name: user.displayName || "Unknown",
         },
         status: "upcoming" as const,
+        parkLocation: {
+          address: park.location.address,
+          coordinates: park.location.coordinates,
+        },
       };
 
       await gameService.createGame(newGame);
